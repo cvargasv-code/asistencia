@@ -1,0 +1,397 @@
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-sans); }
+.app { max-width: 420px; margin: 0 auto; padding: 1rem; }
+.header { text-align: center; padding: 1.5rem 0 1rem; }
+.header h1 { font-size: 20px; font-weight: 500; color: var(--color-text-primary); }
+.header p { font-size: 13px; color: var(--color-text-secondary); margin-top: 4px; }
+.tabs { display: flex; border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); overflow: hidden; margin-bottom: 1rem; }
+.tab { flex: 1; padding: 8px; font-size: 13px; background: none; border: none; cursor: pointer; color: var(--color-text-secondary); font-family: var(--font-sans); transition: all 0.15s; }
+.tab.active { background: var(--color-background-secondary); color: var(--color-text-primary); font-weight: 500; }
+.panel { display: none; }
+.panel.active { display: block; }
+.scanner-box { background: var(--color-background-secondary); border-radius: var(--border-radius-lg); border: 0.5px solid var(--color-border-tertiary); padding: 1.5rem; text-align: center; margin-bottom: 1rem; }
+.scanner-box video { width: 100%; max-width: 280px; border-radius: var(--border-radius-md); display: block; margin: 0 auto; }
+.scanner-placeholder { width: 100%; max-width: 280px; height: 220px; margin: 0 auto; background: var(--color-background-primary); border-radius: var(--border-radius-md); border: 2px dashed var(--color-border-secondary); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; }
+.scanner-placeholder i { font-size: 40px; color: var(--color-text-tertiary); }
+.scanner-placeholder span { font-size: 13px; color: var(--color-text-secondary); }
+.scan-line { position: absolute; width: 100%; height: 2px; background: #1D9E75; animation: scan 2s linear infinite; opacity: 0.8; }
+@keyframes scan { 0% { top: 10%; } 100% { top: 90%; } }
+.video-wrapper { position: relative; overflow: hidden; width: 100%; max-width: 280px; margin: 0 auto; }
+.result-card { border-radius: var(--border-radius-lg); border: 0.5px solid var(--color-border-tertiary); padding: 1rem 1.25rem; background: var(--color-background-primary); margin-bottom: 1rem; }
+.result-card.success { border-color: #1D9E75; background: #E1F5EE; }
+.result-card.error { border-color: #E24B4A; background: #FCEBEB; }
+.result-card.warning { border-color: #EF9F27; background: #FAEEDA; }
+.result-name { font-size: 18px; font-weight: 500; color: var(--color-text-primary); }
+.result-card.success .result-name { color: #085041; }
+.result-card.error .result-name { color: #A32D2D; }
+.result-card.warning .result-name { color: #633806; }
+.result-meta { font-size: 13px; color: var(--color-text-secondary); margin-top: 4px; }
+.result-card.success .result-meta { color: #0F6E56; }
+.result-card.error .result-meta { color: #993C1D; }
+.result-card.warning .result-meta { color: #854F0B; }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 1rem; }
+.stat { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 0.75rem; text-align: center; }
+.stat-num { font-size: 22px; font-weight: 500; color: var(--color-text-primary); }
+.stat-label { font-size: 11px; color: var(--color-text-secondary); margin-top: 2px; }
+.input-group { margin-bottom: 0.75rem; }
+.input-group label { font-size: 12px; color: var(--color-text-secondary); display: block; margin-bottom: 4px; }
+input[type="text"], input[type="number"] { width: 100%; }
+.btn { width: 100%; padding: 10px; font-size: 14px; cursor: pointer; border-radius: var(--border-radius-md); font-family: var(--font-sans); margin-bottom: 0.5rem; }
+.btn-primary { background: #1D9E75; color: white; border: none; font-weight: 500; }
+.btn-primary:hover { background: #0F6E56; }
+.btn-secondary { background: var(--color-background-primary); color: var(--color-text-primary); border: 0.5px solid var(--color-border-secondary); }
+.btn-secondary:hover { background: var(--color-background-secondary); }
+.btn-danger { background: var(--color-background-primary); color: #A32D2D; border: 0.5px solid #F09595; }
+.btn-icon { display: inline-flex; align-items: center; gap: 6px; justify-content: center; }
+.list-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
+.list-header span { font-size: 13px; font-weight: 500; color: var(--color-text-primary); }
+.attendee-list { max-height: 300px; overflow-y: auto; }
+.attendee-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 0.5px solid var(--color-border-tertiary); }
+.attendee-row:last-child { border-bottom: none; }
+.avatar { width: 32px; height: 32px; border-radius: 50%; background: #9FE1CB; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 500; color: #085041; flex-shrink: 0; }
+.attendee-info { flex: 1; min-width: 0; }
+.attendee-name { font-size: 13px; font-weight: 500; color: var(--color-text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.attendee-time { font-size: 11px; color: var(--color-text-secondary); }
+.badge { font-size: 10px; padding: 2px 8px; border-radius: 20px; flex-shrink: 0; }
+.badge-ok { background: #E1F5EE; color: #085041; }
+.badge-dup { background: #FAEEDA; color: #633806; }
+.setup-card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1.25rem; margin-bottom: 1rem; }
+.setup-card h3 { font-size: 14px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 0.75rem; display: flex; align-items: center; gap: 6px; }
+.config-status { font-size: 12px; padding: 6px 10px; border-radius: var(--border-radius-md); margin-top: 8px; }
+.config-ok { background: #E1F5EE; color: #085041; }
+.config-pending { background: #FAEEDA; color: #633806; }
+.empty-state { text-align: center; padding: 2rem 1rem; color: var(--color-text-secondary); font-size: 13px; }
+.empty-state i { font-size: 32px; color: var(--color-text-tertiary); display: block; margin-bottom: 8px; }
+.manual-input { display: flex; gap: 6px; margin-bottom: 1rem; }
+.manual-input input { flex: 1; }
+.manual-input button { flex-shrink: 0; padding: 8px 12px; }
+.scanning-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #085041; background: #E1F5EE; padding: 4px 10px; border-radius: 20px; margin-top: 8px; }
+.dot { width: 6px; height: 6px; border-radius: 50%; background: #1D9E75; animation: pulse 1.2s ease-in-out infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+.export-info { font-size: 12px; color: var(--color-text-secondary); padding: 8px; background: var(--color-background-secondary); border-radius: var(--border-radius-md); margin-top: 8px; line-height: 1.5; }
+</style>
+
+<h2 class="sr-only">Sistema de control de asistencia mediante código QR</h2>
+
+<div class="app">
+  <div class="header">
+    <h1><i class="ti ti-scan" aria-hidden="true"></i> Control de asistencia</h1>
+    <p id="event-name-display">Configura tu evento en Ajustes</p>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('scanner')"><i class="ti ti-scan" aria-hidden="true"></i> Escanear</button>
+    <button class="tab" onclick="switchTab('list')"><i class="ti ti-list" aria-hidden="true"></i> Asistentes</button>
+    <button class="tab" onclick="switchTab('config')"><i class="ti ti-settings" aria-hidden="true"></i> Ajustes</button>
+  </div>
+
+  <div id="panel-scanner" class="panel active">
+    <div class="stats">
+      <div class="stat"><div class="stat-num" id="stat-total">0</div><div class="stat-label">Registrados</div></div>
+      <div class="stat"><div class="stat-num" id="stat-expected">—</div><div class="stat-label">Esperados</div></div>
+      <div class="stat"><div class="stat-num" id="stat-pct">—</div><div class="stat-label">Asistencia</div></div>
+    </div>
+
+    <div class="scanner-box">
+      <div id="scanner-ui">
+        <div class="scanner-placeholder" id="placeholder">
+          <i class="ti ti-qrcode" aria-hidden="true"></i>
+          <span>Cámara no iniciada</span>
+        </div>
+        <div class="video-wrapper" id="video-wrapper" style="display:none;">
+          <video id="preview" autoplay playsinline muted></video>
+          <div class="scan-line"></div>
+        </div>
+      </div>
+      <div id="scanning-indicator" style="display:none; margin-top:8px;">
+        <span class="scanning-badge"><span class="dot"></span> Escaneando...</span>
+      </div>
+      <button class="btn btn-primary btn-icon" id="camera-btn" onclick="toggleCamera()" style="margin-top:12px; width:auto; display:inline-flex; padding:8px 20px;">
+        <i class="ti ti-camera" aria-hidden="true"></i> Iniciar cámara
+      </button>
+    </div>
+
+    <div id="result-display"></div>
+
+    <div style="margin-bottom:1rem;">
+      <div style="font-size:12px; color:var(--color-text-secondary); margin-bottom:6px;">O ingresa manualmente:</div>
+      <div class="manual-input">
+        <input type="text" id="manual-id" placeholder="ID o nombre del asistente..." />
+        <button class="btn btn-secondary" onclick="registerManual()" style="width:auto;">Registrar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="panel-list" class="panel">
+    <div class="list-header">
+      <span id="list-count">0 asistentes registrados</span>
+      <button class="btn btn-secondary btn-icon" onclick="exportData()" style="width:auto; padding:6px 12px; font-size:12px;">
+        <i class="ti ti-download" aria-hidden="true"></i> Exportar CSV
+      </button>
+    </div>
+    <div class="attendee-list" id="attendee-list">
+      <div class="empty-state"><i class="ti ti-users" aria-hidden="true"></i>Aún no hay registros</div>
+    </div>
+  </div>
+
+  <div id="panel-config" class="panel">
+    <div class="setup-card">
+      <h3><i class="ti ti-calendar-event" aria-hidden="true"></i> Datos del evento</h3>
+      <div class="input-group">
+        <label>Nombre del evento</label>
+        <input type="text" id="cfg-event" placeholder="Ej: Conferencia de Marketing 2025" />
+      </div>
+      <div class="input-group">
+        <label>Asistentes esperados</label>
+        <input type="number" id="cfg-expected" placeholder="Ej: 150" min="1" />
+      </div>
+      <button class="btn btn-primary btn-icon" onclick="saveConfig()">
+        <i class="ti ti-device-floppy" aria-hidden="true"></i> Guardar configuración
+      </button>
+    </div>
+
+    <div class="setup-card">
+      <h3><i class="ti ti-table" aria-hidden="true"></i> Google Sheets</h3>
+      <div class="input-group">
+        <label>ID de la hoja (de la URL)</label>
+        <input type="text" id="cfg-sheet" placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms" />
+      </div>
+      <div class="input-group">
+        <label>API Key de Google</label>
+        <input type="text" id="cfg-apikey" placeholder="AIzaSy..." />
+      </div>
+      <button class="btn btn-secondary btn-icon" onclick="testSheets()">
+        <i class="ti ti-plug" aria-hidden="true"></i> Probar conexión
+      </button>
+      <div id="sheets-status"></div>
+      <div class="export-info">
+        <i class="ti ti-info-circle" aria-hidden="true"></i> Si no tienes API key, el botón "Exportar CSV" siempre guarda todo localmente. La integración con Sheets es opcional.
+      </div>
+    </div>
+
+    <div class="setup-card">
+      <h3><i class="ti ti-trash" aria-hidden="true"></i> Datos</h3>
+      <button class="btn btn-danger btn-icon" onclick="clearData()">
+        <i class="ti ti-refresh" aria-hidden="true"></i> Limpiar registros del evento
+      </button>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/jsqr@1.4.0/dist/jsQR.js"></script>
+<script>
+const state = {
+  attendees: JSON.parse(localStorage.getItem('asist_attendees') || '[]'),
+  config: JSON.parse(localStorage.getItem('asist_config') || '{}'),
+  scanning: false,
+  stream: null,
+  animFrame: null
+};
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  const tabs = ['scanner','list','config'];
+  document.querySelectorAll('.tab')[tabs.indexOf(tab)].classList.add('active');
+  document.getElementById('panel-' + tab).classList.add('active');
+  if (tab === 'list') renderList();
+  if (tab === 'config') loadConfig();
+}
+
+function saveLocal() {
+  localStorage.setItem('asist_attendees', JSON.stringify(state.attendees));
+  localStorage.setItem('asist_config', JSON.stringify(state.config));
+}
+
+function updateStats() {
+  const total = state.attendees.length;
+  const expected = state.config.expected || 0;
+  document.getElementById('stat-total').textContent = total;
+  document.getElementById('stat-expected').textContent = expected || '—';
+  document.getElementById('stat-pct').textContent = expected ? Math.round(total/expected*100) + '%' : '—';
+  document.getElementById('event-name-display').textContent = state.config.eventName || 'Configura tu evento en Ajustes';
+}
+
+function showResult(type, name, detail) {
+  const el = document.getElementById('result-display');
+  el.innerHTML = `<div class="result-card ${type}">
+    <div class="result-name">${type==='success'?'✓ ':type==='error'?'✗ ':'⚠ '}${name}</div>
+    <div class="result-meta">${detail}</div>
+  </div>`;
+  setTimeout(() => { if(el.children.length) el.innerHTML = ''; }, 4000);
+}
+
+function registerAttendee(id) {
+  const trimId = id.trim();
+  if (!trimId) return;
+  const existing = state.attendees.find(a => a.id.toLowerCase() === trimId.toLowerCase());
+  if (existing) {
+    showResult('warning', trimId, 'Ya fue registrado a las ' + existing.time);
+    return;
+  }
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString('es-CO', {hour:'2-digit',minute:'2-digit'});
+  const dateStr = now.toLocaleDateString('es-CO');
+  const record = { id: trimId, time: timeStr, date: dateStr, ts: now.toISOString() };
+  state.attendees.unshift(record);
+  saveLocal();
+  updateStats();
+  showResult('success', trimId, 'Registrado a las ' + timeStr + ' · ' + dateStr);
+  if (state.config.sheetId && state.config.apiKey) pushToSheets(record);
+}
+
+function registerManual() {
+  const val = document.getElementById('manual-id').value;
+  registerAttendee(val);
+  document.getElementById('manual-id').value = '';
+}
+
+async function toggleCamera() {
+  if (state.scanning) {
+    stopCamera();
+    return;
+  }
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+    state.stream = stream;
+    state.scanning = true;
+    const video = document.getElementById('preview');
+    video.srcObject = stream;
+    document.getElementById('placeholder').style.display = 'none';
+    document.getElementById('video-wrapper').style.display = 'block';
+    document.getElementById('scanning-indicator').style.display = 'block';
+    document.getElementById('camera-btn').innerHTML = '<i class="ti ti-camera-off" aria-hidden="true"></i> Detener cámara';
+    scanLoop(video);
+  } catch(e) {
+    showResult('error', 'Sin acceso a la cámara', 'Permite el acceso en tu navegador o usa el ingreso manual');
+  }
+}
+
+function stopCamera() {
+  if (state.stream) state.stream.getTracks().forEach(t => t.stop());
+  state.scanning = false;
+  if (state.animFrame) cancelAnimationFrame(state.animFrame);
+  document.getElementById('placeholder').style.display = 'flex';
+  document.getElementById('video-wrapper').style.display = 'none';
+  document.getElementById('scanning-indicator').style.display = 'none';
+  document.getElementById('camera-btn').innerHTML = '<i class="ti ti-camera" aria-hidden="true"></i> Iniciar cámara';
+}
+
+let lastScanned = '';
+let lastScannedTime = 0;
+
+function scanLoop(video) {
+  if (!state.scanning) return;
+  if (video.readyState === video.HAVE_ENOUGH_DATA) {
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0);
+    const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const code = jsQR(img.data, img.width, img.height, { inversionAttempts: 'dontInvert' });
+    if (code) {
+      const now = Date.now();
+      if (code.data !== lastScanned || now - lastScannedTime > 3000) {
+        lastScanned = code.data;
+        lastScannedTime = now;
+        registerAttendee(code.data);
+      }
+    }
+  }
+  state.animFrame = requestAnimationFrame(() => scanLoop(video));
+}
+
+function renderList() {
+  const container = document.getElementById('attendee-list');
+  document.getElementById('list-count').textContent = state.attendees.length + ' asistentes registrados';
+  if (!state.attendees.length) {
+    container.innerHTML = '<div class="empty-state"><i class="ti ti-users" aria-hidden="true"></i>Aún no hay registros</div>';
+    return;
+  }
+  container.innerHTML = state.attendees.map(a => {
+    const initials = a.id.trim().split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+    return `<div class="attendee-row">
+      <div class="avatar">${initials}</div>
+      <div class="attendee-info">
+        <div class="attendee-name">${a.id}</div>
+        <div class="attendee-time">${a.date} · ${a.time}</div>
+      </div>
+      <span class="badge badge-ok">OK</span>
+    </div>`;
+  }).join('');
+}
+
+function exportData() {
+  if (!state.attendees.length) { alert('No hay datos para exportar'); return; }
+  const header = 'Nombre/ID,Fecha,Hora,Timestamp\n';
+  const rows = state.attendees.map(a => `"${a.id}","${a.date}","${a.time}","${a.ts}"`).join('\n');
+  const blob = new Blob(['\uFEFF' + header + rows], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = (state.config.eventName || 'asistencia') + '_' + new Date().toISOString().split('T')[0] + '.csv';
+  link.click();
+}
+
+function loadConfig() {
+  document.getElementById('cfg-event').value = state.config.eventName || '';
+  document.getElementById('cfg-expected').value = state.config.expected || '';
+  document.getElementById('cfg-sheet').value = state.config.sheetId || '';
+  document.getElementById('cfg-apikey').value = state.config.apiKey || '';
+}
+
+function saveConfig() {
+  state.config.eventName = document.getElementById('cfg-event').value;
+  state.config.expected = parseInt(document.getElementById('cfg-expected').value) || 0;
+  state.config.sheetId = document.getElementById('cfg-sheet').value;
+  state.config.apiKey = document.getElementById('cfg-apikey').value;
+  saveLocal();
+  updateStats();
+  alert('Configuración guardada ✓');
+}
+
+async function testSheets() {
+  const sid = document.getElementById('cfg-sheet').value;
+  const key = document.getElementById('cfg-apikey').value;
+  const el = document.getElementById('sheets-status');
+  if (!sid || !key) { el.innerHTML = '<div class="config-status config-pending">Ingresa el ID de la hoja y la API key</div>'; return; }
+  el.innerHTML = '<div class="config-status config-pending">Probando...</div>';
+  try {
+    const r = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sid}?key=${key}`);
+    if (r.ok) {
+      const d = await r.json();
+      el.innerHTML = `<div class="config-status config-ok">Conectado: "${d.properties.title}"</div>`;
+    } else {
+      el.innerHTML = '<div class="config-status" style="background:#FCEBEB;color:#A32D2D;">Error de conexión — revisa el ID y la API key</div>';
+    }
+  } catch(e) {
+    el.innerHTML = '<div class="config-status" style="background:#FCEBEB;color:#A32D2D;">No se pudo conectar</div>';
+  }
+}
+
+async function pushToSheets(record) {
+  const { sheetId, apiKey } = state.config;
+  if (!sheetId || !apiKey) return;
+  try {
+    await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/A1:append?valueInputOption=USER_ENTERED&key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ values: [[record.id, record.date, record.time, record.ts]] })
+    });
+  } catch(e) {}
+}
+
+function clearData() {
+  if (!confirm('¿Seguro que quieres borrar todos los registros de asistencia?')) return;
+  state.attendees = [];
+  saveLocal();
+  updateStats();
+  renderList();
+  alert('Registros eliminados');
+}
+
+updateStats();
+</script>
