@@ -373,13 +373,12 @@ async function testSheets() {
 }
 
 async function pushToSheets(record) {
-  const { sheetId, apiKey } = state.config;
-  if (!sheetId || !apiKey) return;
   try {
-    await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/A1:append?valueInputOption=USER_ENTERED&key=${apiKey}`, {
+    await fetch('https://script.google.com/macros/s/AKfycbwdoSbdWnHSBXWJ1Y_wqeG0CYMgUpG_2Uy-fTc_rjwtQoA3j5BBdl1TsC1ykRgDXUf_Nw/exec', {
       method: 'POST',
+      mode: 'no-cors',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ values: [[record.id, record.date, record.time, record.ts]] })
+      body: JSON.stringify(record)
     });
   } catch(e) {}
 }
